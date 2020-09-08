@@ -26,6 +26,12 @@ def calc_aqi(value, index):
     c = value - bp['pm_low']
     return round((aqi_range/pm_range) * c + bp['aqi_low'])
 
+# LRAPA conversion using the same formula as used by PurpleAir's map as of 2020-09-06
+# Note that this is not the same LRAPA as listed in the below articles/papers:
+# https://thebolditalic.com/understanding-purpleair-vs-airnow-gov-measurements-of-wood-smoke-pollution-562923a55226
+# https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=349513&Lab=CEMM&simplesearch=0&showcriteria=2&sortby=pubDate&timstype=&datebeginpublishedpresented=08/25/2018
+def lrapa(value):
+    return 0.5 * value - 0.66
 
 class PurpleAirApi:
     def __init__(self, hass, session):
@@ -137,7 +143,7 @@ class PurpleAirApi:
                         readings[prop] = None
 
             if 'pm2_5_atm' in readings:
-                readings['pm2_5_atm_aqi'] = calc_aqi(readings['pm2_5_atm'], 'pm2_5')
+                readings['pm2_5_atm_aqi'] = calc_aqi(lrapa(readings['pm2_5_atm']), 'pm2_5')
 
         self._data = nodes
         async_dispatcher_send(self._hass, DISPATCHER_PURPLE_AIR)
